@@ -20,76 +20,175 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       })
     })
-
-    // Close mobile menu when clicking on links
-    const mobileLinks = mobileMenu.querySelectorAll("a")
-    mobileLinks.forEach((link) => {
-      link.addEventListener("click", () => {
-        mobileMenu.classList.remove("active")
-        const spans = mobileMenuBtn.querySelectorAll("span")
-        spans.forEach((span) => {
-          span.style.transform = "none"
-          span.style.opacity = "1"
-        })
-      })
-    })
   }
 })
 
-// Parallax Background Effect
-document.addEventListener("DOMContentLoaded", () => {
-  const parallaxBg = document.getElementById("parallaxBg")
-  const heroSection = document.querySelector(".hero")
+// Close mobile menu function
+function closeMobileMenu() {
+  const mobileMenu = document.getElementById("mobileMenu")
+  const mobileMenuBtn = document.getElementById("mobileMenuBtn")
 
-  if (parallaxBg && heroSection) {
+  if (mobileMenu && mobileMenuBtn) {
+    mobileMenu.classList.remove("active")
+    const spans = mobileMenuBtn.querySelectorAll("span")
+    spans.forEach((span) => {
+      span.style.transform = "none"
+      span.style.opacity = "1"
+    })
+  }
+}
+
+// Parallax Background Effect with Interactive Hero
+document.addEventListener("DOMContentLoaded", () => {
+  const heroSection = document.querySelector(".hero")
+  const parallaxBg = document.getElementById("parallaxBg")
+  const heroSpotlight = document.getElementById("heroSpotlight")
+  const heroGlow = document.getElementById("heroGlow")
+
+  if (heroSection && parallaxBg) {
     const bgImage = parallaxBg.querySelector(".hero-bg-image")
 
     // Variables to control the effect intensity
-    const movementFactor = 20 // How much the image moves (lower = more subtle)
-    const rotationFactor = 0.5 // How much the image rotates (lower = more subtle)
-    const scaleFactor = 1.1 // Initial scale to ensure no white edges during movement
+    const movementFactor = 20
+    const rotationFactor = 0.5
+    const scaleFactor = 1.1
 
     const handleMouseMove = (e) => {
-      const rect = heroSection.getBoundingClientRect()
+      try {
+        const rect = heroSection.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+        const centerX = rect.width / 2
+        const centerY = rect.height / 2
 
-      // Calculate mouse position relative to the center of the container
-      const centerX = rect.width / 2
-      const centerY = rect.height / 2
-      const mouseX = e.clientX - rect.left
-      const mouseY = e.clientY - rect.top
+        // Calculate relative position (-1 to 1)
+        const relativeX = (x - centerX) / centerX
+        const relativeY = (y - centerY) / centerY
 
-      // Calculate the percentage of mouse position (-1 to 1)
-      const relativeX = (mouseX - centerX) / centerX
-      const relativeY = (mouseY - centerY) / centerY
+        // Update CSS custom properties for mouse position
+        heroSection.style.setProperty("--mouse-x", `${x}px`)
+        heroSection.style.setProperty("--mouse-y", `${y}px`)
 
-      // Apply transform to the image with smooth transition
-      // Move in the opposite direction of mouse for parallax effect
-      if (bgImage) {
-        bgImage.style.transform = `
-                    scale(${scaleFactor}) 
-                    translate(${-relativeX * movementFactor}px, ${-relativeY * movementFactor}px)
-                    rotateX(${relativeY * rotationFactor}deg) 
-                    rotateY(${-relativeX * rotationFactor}deg)
-                `
+        // Update spotlight position
+        if (heroSpotlight) {
+          heroSpotlight.style.background = `radial-gradient(600px circle at ${x}px ${y}px, rgba(255, 255, 255, 0.1) 0%, transparent 40%)`
+        }
+
+        // Update glow effect
+        if (heroGlow) {
+          heroGlow.style.background = `radial-gradient(400px circle at ${x}px ${y}px, rgba(255, 192, 0, 0.15) 0%, transparent 50%)`
+        }
+
+        // Apply parallax effect to background image
+        if (bgImage) {
+          bgImage.style.transform = `
+            scale(${scaleFactor}) 
+            translate(${-relativeX * movementFactor}px, ${-relativeY * movementFactor}px)
+            rotateX(${relativeY * rotationFactor}deg) 
+            rotateY(${-relativeX * rotationFactor}deg)
+          `
+        }
+
+        // Apply parallax effect to floating elements
+        const floatingElements = heroSection.querySelectorAll(".floating-element")
+        floatingElements.forEach((element, index) => {
+          const speed = (index + 1) * 0.02
+          const moveX = relativeX * 20 * speed
+          const moveY = relativeY * 20 * speed
+          element.style.transform = `translate(${moveX}px, ${moveY}px)`
+        })
+
+        // Apply tilt effect to statistics cards
+        const statCards = heroSection.querySelectorAll(".stat-card[data-tilt]")
+        statCards.forEach((card) => {
+          const cardRect = card.getBoundingClientRect()
+          const cardCenterX = cardRect.left + cardRect.width / 2
+          const cardCenterY = cardRect.top + cardRect.height / 2
+
+          const deltaX = e.clientX - cardCenterX
+          const deltaY = e.clientY - cardCenterY
+          const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+
+          if (distance < 200) {
+            const tiltX = (deltaY / 200) * 10
+            const tiltY = (deltaX / 200) * -10
+            card.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.05)`
+          } else {
+            card.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)"
+          }
+        })
+
+        // Apply magnetic effect to buttons
+        const buttons = heroSection.querySelectorAll(".magnetic-button")
+        buttons.forEach((button) => {
+          const buttonRect = button.getBoundingClientRect()
+          const buttonCenterX = buttonRect.left + buttonRect.width / 2
+          const buttonCenterY = buttonRect.top + buttonRect.height / 2
+
+          const deltaX = e.clientX - buttonCenterX
+          const deltaY = e.clientY - buttonCenterY
+          const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+
+          if (distance < 100) {
+            const pullX = (deltaX / distance) * 8
+            const pullY = (deltaY / distance) * 8
+            button.style.transform = `translate(${pullX}px, ${pullY}px) scale(1.05)`
+          } else {
+            button.style.transform = "translate(0px, 0px) scale(1)"
+          }
+        })
+      } catch (error) {
+        console.warn("Error in mouse move handler:", error)
       }
     }
 
     const handleMouseLeave = () => {
-      // Reset the image position with a smooth transition when mouse leaves
-      if (bgImage) {
-        bgImage.style.transform = `scale(${scaleFactor}) translate(0px, 0px) rotateX(0deg) rotateY(0deg)`
+      try {
+        // Reset all effects when mouse leaves
+        if (bgImage) {
+          bgImage.style.transform = `scale(${scaleFactor}) translate(0px, 0px) rotateX(0deg) rotateY(0deg)`
+        }
+
+        if (heroSpotlight) {
+          heroSpotlight.style.background = "transparent"
+        }
+
+        if (heroGlow) {
+          heroGlow.style.background = "transparent"
+        }
+
+        const floatingElements = heroSection.querySelectorAll(".floating-element")
+        floatingElements.forEach((element) => {
+          element.style.transform = "translate(0px, 0px)"
+        })
+
+        const statCards = heroSection.querySelectorAll(".stat-card[data-tilt]")
+        statCards.forEach((card) => {
+          card.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)"
+        })
+
+        const buttons = heroSection.querySelectorAll(".magnetic-button")
+        buttons.forEach((button) => {
+          button.style.transform = "translate(0px, 0px) scale(1)"
+        })
+      } catch (error) {
+        console.warn("Error in mouse leave handler:", error)
       }
     }
 
-    // Add event listeners
-    heroSection.addEventListener("mousemove", handleMouseMove)
-    heroSection.addEventListener("mouseleave", handleMouseLeave)
+    // Add event listeners with error handling
+    try {
+      heroSection.addEventListener("mousemove", handleMouseMove)
+      heroSection.addEventListener("mouseleave", handleMouseLeave)
 
-    // Set initial scale to prevent white edges
-    if (bgImage) {
-      bgImage.style.transform = `scale(${scaleFactor})`
-      bgImage.style.transition = "transform 0.3s ease-out"
-      bgImage.style.willChange = "transform"
+      // Set initial scale to prevent white edges
+      if (bgImage) {
+        bgImage.style.transform = `scale(${scaleFactor})`
+        bgImage.style.transition = "transform 0.3s ease-out"
+        bgImage.style.willChange = "transform"
+      }
+    } catch (error) {
+      console.warn("Error setting up hero interactions:", error)
     }
   }
 })
@@ -106,7 +205,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const targetSection = document.querySelector(targetId)
 
       if (targetSection) {
-        const headerHeight = document.querySelector(".header").offsetHeight
+        const header = document.querySelector(".header")
+        const headerHeight = header ? header.offsetHeight : 80
         const targetPosition = targetSection.offsetTop - headerHeight
 
         window.scrollTo({
@@ -117,6 +217,21 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   })
 })
+
+// Scroll to section function
+function scrollToSection(sectionId) {
+  const targetSection = document.getElementById(sectionId)
+  if (targetSection) {
+    const header = document.querySelector(".header")
+    const headerHeight = header ? header.offsetHeight : 80
+    const targetPosition = targetSection.offsetTop - headerHeight
+
+    window.scrollTo({
+      top: targetPosition,
+      behavior: "smooth",
+    })
+  }
+}
 
 // Copy PIX function
 function copyPix() {
@@ -166,6 +281,7 @@ function fallbackCopyTextToClipboard(text) {
   textArea.style.top = "0"
   textArea.style.left = "0"
   textArea.style.position = "fixed"
+  textArea.style.opacity = "0"
 
   document.body.appendChild(textArea)
   textArea.focus()
@@ -179,6 +295,7 @@ function fallbackCopyTextToClipboard(text) {
       showNotification("Erro ao copiar. Tente novamente.")
     }
   } catch (err) {
+    console.warn("Copy failed:", err)
     showNotification("Erro ao copiar. Tente novamente.")
   }
 
@@ -197,31 +314,17 @@ function showNotification(message) {
   const notification = document.createElement("div")
   notification.className = "notification"
   notification.textContent = message
-  notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #0693e3;
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 0.5rem;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        z-index: 10000;
-        font-weight: 600;
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
-    `
 
   document.body.appendChild(notification)
 
   // Animate in
   setTimeout(() => {
-    notification.style.transform = "translateX(0)"
+    notification.classList.add("show")
   }, 100)
 
   // Remove after 3 seconds
   setTimeout(() => {
-    notification.style.transform = "translateX(100%)"
+    notification.classList.remove("show")
     setTimeout(() => {
       if (notification.parentNode) {
         notification.parentNode.removeChild(notification)
@@ -230,8 +333,35 @@ function showNotification(message) {
   }, 3000)
 }
 
+// Newsletter subscription function
+function subscribeNewsletter() {
+  const emailInput = document.getElementById("newsletterEmail")
+  if (!emailInput) return
+
+  const email = emailInput.value.trim()
+
+  if (email && isValidEmail(email)) {
+    showNotification("Obrigado por se inscrever em nossa newsletter!")
+    emailInput.value = ""
+  } else {
+    showNotification("Por favor, insira um e-mail válido.")
+  }
+}
+
+// Email validation function
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
 // Intersection Observer for animations
 document.addEventListener("DOMContentLoaded", () => {
+  // Check if IntersectionObserver is supported
+  if (!window.IntersectionObserver) {
+    console.warn("IntersectionObserver not supported")
+    return
+  }
+
   const observerOptions = {
     threshold: 0.1,
     rootMargin: "0px 0px -50px 0px",
@@ -242,6 +372,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (entry.isIntersecting) {
         entry.target.style.opacity = "1"
         entry.target.style.transform = "translateY(0)"
+        entry.target.style.animation = "fadeInUp 0.6s ease forwards"
+        observer.unobserve(entry.target) // Stop observing once animated
       }
     })
   }, observerOptions)
@@ -262,9 +394,12 @@ document.addEventListener("DOMContentLoaded", () => {
 // Header scroll effect
 document.addEventListener("DOMContentLoaded", () => {
   const header = document.querySelector(".header")
-  let lastScrollTop = 0
+  if (!header) return
 
-  window.addEventListener("scroll", () => {
+  let lastScrollTop = 0
+  let ticking = false
+
+  const updateHeader = () => {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop
 
     if (scrollTop > 100) {
@@ -276,36 +411,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     lastScrollTop = scrollTop
-  })
-})
-
-// Newsletter form handling
-document.addEventListener("DOMContentLoaded", () => {
-  const newsletterForm = document.querySelector(".newsletter-form")
-  const newsletterInput = document.querySelector(".newsletter-input")
-  const newsletterBtn = document.querySelector(".newsletter-btn")
-
-  if (newsletterBtn) {
-    newsletterBtn.addEventListener("click", (e) => {
-      e.preventDefault()
-
-      const email = newsletterInput.value.trim()
-
-      if (email && isValidEmail(email)) {
-        showNotification("Obrigado por se inscrever em nossa newsletter!")
-        newsletterInput.value = ""
-      } else {
-        showNotification("Por favor, insira um e-mail válido.")
-      }
-    })
+    ticking = false
   }
-})
 
-// Email validation function
-function isValidEmail(email) {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
-}
+  const requestTick = () => {
+    if (!ticking) {
+      requestAnimationFrame(updateHeader)
+      ticking = true
+    }
+  }
+
+  window.addEventListener("scroll", requestTick, { passive: true })
+})
 
 // Add loading state to buttons
 document.addEventListener("DOMContentLoaded", () => {
@@ -326,3 +443,57 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   })
 })
+
+// Handle image loading errors
+document.addEventListener("DOMContentLoaded", () => {
+  const images = document.querySelectorAll("img")
+
+  images.forEach((img) => {
+    img.addEventListener("error", function () {
+      console.warn("Failed to load image:", this.src)
+      // You could set a fallback image here if needed
+      // this.src = "/path/to/fallback-image.jpg"
+    })
+  })
+})
+
+// Ensure fonts are loaded
+document.addEventListener("DOMContentLoaded", () => {
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready
+      .then(() => {
+        console.log("Fonts loaded successfully")
+      })
+      .catch((error) => {
+        console.warn("Font loading error:", error)
+      })
+  }
+})
+
+// Initialize all interactive features
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("ADEVIRP Landing Page loaded successfully!")
+
+  // Add a small delay to ensure all elements are rendered
+  setTimeout(() => {
+    // Force a repaint to ensure proper layout
+    document.body.style.display = "none"
+    document.body.offsetHeight // Trigger reflow
+    document.body.style.display = ""
+  }, 100)
+})
+
+// Handle resize events
+let resizeTimeout
+window.addEventListener(
+  "resize",
+  () => {
+    clearTimeout(resizeTimeout)
+    resizeTimeout = setTimeout(() => {
+      // Force layout recalculation on resize
+      const event = new Event("resize")
+      window.dispatchEvent(event)
+    }, 250)
+  },
+  { passive: true },
+)
